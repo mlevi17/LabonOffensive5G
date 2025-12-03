@@ -2,6 +2,7 @@ Vagrant.configure("2") do |config|
 
     # VM for attacker
     config.vm.define "attacker" do |attacker|
+        config.vm.synced_folder "./tools", "/opt/tools" # shared folder for attack script
         attacker.vm.box = "kalilinux/rolling"
         attacker.vm.hostname = "attacker"
         attacker.vm.network "private_network", ip: "192.168.50.10"

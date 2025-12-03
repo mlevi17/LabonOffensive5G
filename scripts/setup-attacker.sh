@@ -5,7 +5,8 @@ apt-get upgrade -y
 apt-get install -y \
     python3 \
     python3-pip \
-    scapy
+    scapy \
+    tcpdump
 
 #configure ip forwarding
 echo 1 > /proc/sys/net/ipv4/ip_forward
