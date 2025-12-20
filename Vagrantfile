@@ -29,9 +29,13 @@ Vagrant.configure("2") do |config|
 
     # VM for Server (Web Server & DNS)
     config.vm.define "server" do |server|
+        config.vm.synced_folder "./DNS_server", "/home/vagrant/dns-config" # shared folder for dns server config file
+        config.vm.synced_folder "./webserver/webserver_config", "/var/www/test-site.com"  # shared folder for webserver 
+        config.vm.synced_folder "./webserver/nginx_sites", "/home/vagrant/nginx_sites"
         server.vm.box = "ubuntu/focal64"
         server.vm.hostname = "server"
-        server.vm.network "private_network", ip: "192.168.50.30"
+        server.vm.network "private_network", ip: "192.168.50.30" # network for DNS server
+        server.vm.network "private_network", ip: "192.168.50.40" # network for HTTP server
         server.vm.provider "virtualbox" do |vb|
             vb.name = "server_vm"
             vb.memory = "1024"
