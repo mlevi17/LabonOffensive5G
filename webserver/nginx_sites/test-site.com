@@ -5,7 +5,12 @@ server {
     root /var/www/test-site.com;
     index index.html;
 
+    location /submit {
+        return 200 "Submitted\n";
+    }
+    
     location / {
         try_files $uri $uri/ =404;
     }
+
 }
