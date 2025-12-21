@@ -25,4 +25,4 @@ echo "nameserver 127.0.0.1" > /etc/resolv.conf
 
 # install nginx
 sudo apt install nginx -y
-sudo ln -s /home/vagrant/nginx_sites/test-site.com /etc/nginx/sites-enabled/test-site.com
+sudo ln -s /home/vagrant/nginx_sites/unsecure-login.com /etc/nginx/sites-enabled/unsecure-login.com

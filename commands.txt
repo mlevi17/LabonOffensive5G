@@ -1,0 +1,21 @@
+VM
+vagrant provision victim
+vagrant ssh victim
+
+
+DNS
+cat /etc/resolv.conf
+systemctl status dnsmasq
+sudo systemctl restart dnsmasq
+
+
+Webserver
+systemctl status nginx
+sudo systemctl restart nginx
+sudo nginx -t
+curl http://unsecure-login.com
+curl http://unsecure-login.com/submit?data=pwd-123
+
+
+Attack
+sudo python3 /opt/tools/attack.py
