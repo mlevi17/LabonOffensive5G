@@ -17,3 +17,5 @@ apt-get install -y \
 #configure ip forwarding
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
+rm -f /etc/resolv.conf
+echo "nameserver 192.168.50.30" > /etc/resolv.conf

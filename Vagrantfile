@@ -21,7 +21,7 @@ Vagrant.configure("2") do |config|
         victim.vm.network "private_network", ip: "192.168.50.20"
         victim.vm.provider "virtualbox" do |vb|
             vb.name = "victim_vm"
-            vb.memory = "1024"
+            vb.memory = "2048"
             vb.cpus = 1
         end
         victim.vm.provision "shell", path: "scripts/setup-victim.sh"

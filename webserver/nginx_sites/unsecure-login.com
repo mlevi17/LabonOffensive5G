@@ -3,7 +3,7 @@ server {
     server_name unsecure-login.com;
 
     root /var/www/unsecure-login.com;
-    index unsecure-login.com.html;
+    index unsecure-login.html;
 
     location /submit {
         return 200 "Submitted\n";
