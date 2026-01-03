@@ -14,6 +14,8 @@ apt-get install -y \
     scapy \
     tcpdump
 
+sudo apt install python3-netfilterqueue
+
 #configure ip forwarding
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
