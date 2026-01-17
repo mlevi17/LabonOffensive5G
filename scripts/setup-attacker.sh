@@ -19,8 +19,8 @@ sudo apt install python3-netfilterqueue
 #configure ip forwarding
 echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward
 
-rm -f /etc/resolv.conf
-echo "nameserver 192.168.50.30" > /etc/resolv.conf
+sudo rm -f /etc/resolv.conf
+echo "nameserver 192.168.50.30" | sudo tee /etc/resolv.conf
 
 # install opneSSL and create a cert
 sudo apt-get install -y openssl
