@@ -36,5 +36,6 @@ sudo apt install nginx -y
 systemctl enable nginx
 systemctl restart nginx
 
+# Create symlink for website
 sudo ln -s /home/vagrant/nginx_sites/secure-login.com /etc/nginx/sites-enabled/secure-login.com
 

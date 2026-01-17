@@ -5,8 +5,8 @@ systemctl mask systemd-resolved
 # make sure DNS queries still get resolved 
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 
-#apt-get update
-#apt-get upgrade -y
+apt-get update
+apt-get upgrade -y
 
 # install DNS service
 apt-get install -y dnsmasq
@@ -35,4 +35,6 @@ sudo openssl req -new -x509 \
 sudo apt install nginx -y
 systemctl enable nginx
 systemctl restart nginx
+
+# Create symlink for website
 sudo ln -s /home/vagrant/nginx_sites/secure-login.com /etc/nginx/sites-enabled/secure-login.com

