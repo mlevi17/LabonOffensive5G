@@ -1,1 +1,6 @@
 /.vagrant/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+tools/captured_packets.log

